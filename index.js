@@ -5,12 +5,19 @@ const cors = require('cors');
 const helmet = require('helmet');
 
 const db = require('./db');
+const adminRoutes = require('./routes/admin');
 
 const app = express();
 app.use(cors());
 app.use(helmet());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
+
+app.use('/admin', adminRoutes);
+
+app.use('', (req, res) => {
+    res.status(403).send("Invalid URL");
+});
 
 db.connect().then(() => {
     app.listen(8080, (err) => {
