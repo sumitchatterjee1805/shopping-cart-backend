@@ -60,20 +60,35 @@ exports.postAddCategory = async (req, res) => {
         return res.status(500).send("Error: " + error.message);
     }
 }
-
+const catObjList = {};
 exports.getCategories = async (req, res) => {
     try {
         const result = await Category.find({ parent: { $exists: true, $size: 0 } });
         const set = new Set();
-        result.forEach(cat => {
+        const response = [];
+        const cat_array = [];
+
+        for(let i = 0; i < result.length; i++) {
+            const cat = result[i];
+            const obj = {
+                category_code: cat.category_code,
+                name: cat.name,
+                child_categories: []
+            }
+
             if (cat.child)
                 cat.child.forEach(child => {
                     set.add(child._id);
                 });
-        });
-        const childResult = await Category.find({ _id: { $in: Array.from(set) } });
+            if (set.size > 0) {
+                const childObj = await getChildCategory(Array.from(set));
+                obj.child_categories.push(...childObj);
+            }
+            response.push(obj);
+        }
+        // const childResult = await Category.find({ _id: { $in: Array.from(set) } });
 
-        return res.status(200).send(result);
+        return res.status(200).send(response);
     } catch (error) {
         return res.status(500).send("Error: " + error.message);
     }
@@ -113,4 +128,31 @@ exports.editProduct = async (req, res) => {
     } catch (error) {
         return res.status(500).send("Error: " + error.message);
     }
+}
+
+const getChildCategory = async (category) => {
+    const set = new Set();
+    const response = [];
+    const result = await Category.find().where('_id').in(category);
+    
+    for(let i = 0; i < result.length; i++) {
+        const cat = result[i];
+        const obj = {
+            category_code: cat.category_code,
+            name: cat.name,
+            child_categories: []
+        }
+
+        if (cat.child)
+            cat.child.forEach(child => {
+                set.add(child._id);
+            });
+        if (set.size > 0) {
+            const childObj = await getChildCategory(Array.from(set));
+            obj.child_categories.push(...childObj);
+        }
+        response.push(obj);
+    }
+    console.log(response);
+    return response;
 }
