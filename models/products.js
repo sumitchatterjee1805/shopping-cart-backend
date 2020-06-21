@@ -22,7 +22,7 @@ const productSchema = new Schema({
         required: false
     },
     categories: {
-        type: [Schema.Types.ObjectId],
+        type: [String],
         required: false
     }
 });
